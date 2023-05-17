@@ -161,7 +161,7 @@ function App() {
 
   // Add a new function to fetch the counter
   const fetchCronJobRuns = async () => {
-    const res = await axios.get("http://localhost:5000/cron-job-counter");
+    const res = await axios.get("https://notifier-backend.onrender.com/cron-job-counter");
     setCronJobRuns(res.data.counter);
   };
 
@@ -173,7 +173,7 @@ function App() {
   }, []);
 
   const fetchAppData = async () => {
-    const res = await axios.get("http://localhost:5000/apps");
+    const res = await axios.get("https://notifier-backend.onrender.com/apps");
     setAppData(res.data);
   };
 
@@ -184,7 +184,7 @@ function App() {
         appName,
         appVersion,
       };
-      const res = await axios.post("http://localhost:5000/apps", newAppData);
+      const res = await axios.post("https://notifier-backend.onrender.com/apps", newAppData);
       setAppData([...appData, res.data]);
       setAppName("");
       setAppVersion("");
@@ -193,7 +193,7 @@ function App() {
   };
 
   const deleteAppData = async (id) => {
-    await axios.delete(`http://localhost:5000/apps/${id}`);
+    await axios.delete(`https://notifier-backend.onrender.com/apps/${id}`);
     setAppData(appData.filter((data) => data._id !== id));
   };
 
@@ -201,7 +201,7 @@ function App() {
     event.preventDefault();
     if (appToEdit) {
       const res = await axios.put(
-        `http://localhost:5000/apps/${appToEdit._id}`,
+        `https://notifier-backend.onrender.com/apps/${appToEdit._id}`,
         appToEdit
       );
       setAppData(
@@ -222,7 +222,7 @@ function App() {
     for (const app of appData) {
       // Make a request to the backend to update the Google Play Version
       const res = await axios.put(
-        `http://localhost:5000/apps/${app._id}/update`
+        `https://notifier-backend.onrender.com/apps/${app._id}/update`
       );
       // Add the updated app data to the array
       updatedAppData.push(res.data);
