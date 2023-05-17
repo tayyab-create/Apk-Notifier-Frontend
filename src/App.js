@@ -72,6 +72,11 @@ const Input = styled.input`
 const TableContainer = styled.div`
   max-height: 500px;
   overflow-y: auto;
+  scrollbar-width: none; /* Remove scrollbar for Firefox */
+  -ms-overflow-style: none; /* Remove scrollbar for IE and Edge */
+  ::-webkit-scrollbar {
+    width: 0; /* Remove scrollbar for Chrome, Safari, and Opera */
+  }
 `;
 
 const Heading = styled.h1`
@@ -161,7 +166,7 @@ function App() {
 
   // Add a new function to fetch the counter
   const fetchCronJobRuns = async () => {
-    const res = await axios.get("https://notifier-backend.onrender.com/cron-job-counter");
+    const res = await axios.get("http://localhost:5000/cron-job-counter");
     setCronJobRuns(res.data.counter);
   };
 
@@ -173,18 +178,18 @@ function App() {
   }, []);
 
   const fetchAppData = async () => {
-    const res = await axios.get("https://notifier-backend.onrender.com/apps");
+    const res = await axios.get("http://localhost:5000/apps");
     setAppData(res.data);
   };
 
   const addAppData = async () => {
     setAdding(true);
-    if (appName && appVersion) {
+    if (appName.trim() && appVersion.trim()) {
       const newAppData = {
-        appName,
-        appVersion,
+        appName: appName.trim(),
+        appVersion: appVersion.trim(),
       };
-      const res = await axios.post("https://notifier-backend.onrender.com/apps", newAppData);
+      const res = await axios.post("http://localhost:5000/apps", newAppData);
       setAppData([...appData, res.data]);
       setAppName("");
       setAppVersion("");
@@ -193,7 +198,7 @@ function App() {
   };
 
   const deleteAppData = async (id) => {
-    await axios.delete(`https://notifier-backend.onrender.com/apps/${id}`);
+    await axios.delete(`http://localhost:5000/apps/${id}`);
     setAppData(appData.filter((data) => data._id !== id));
   };
 
@@ -201,7 +206,7 @@ function App() {
     event.preventDefault();
     if (appToEdit) {
       const res = await axios.put(
-        `https://notifier-backend.onrender.com/apps/${appToEdit._id}`,
+        `http://localhost:5000/apps/${appToEdit._id}`,
         appToEdit
       );
       setAppData(
@@ -222,7 +227,7 @@ function App() {
     for (const app of appData) {
       // Make a request to the backend to update the Google Play Version
       const res = await axios.put(
-        `https://notifier-backend.onrender.com/apps/${app._id}/update`
+        `http://localhost:5000/apps/${app._id}/update`
       );
       // Add the updated app data to the array
       updatedAppData.push(res.data);
@@ -244,13 +249,13 @@ function App() {
           type="text"
           placeholder="App Name"
           value={appName}
-          onChange={(e) => setAppName(e.target.value.trim())}
+          onChange={(e) => setAppName(e.target.value)}
         />
         <Input
           type="text"
           placeholder="App Version"
           value={appVersion}
-          onChange={(e) => setAppVersion(e.target.value.trim())}
+          onChange={(e) => setAppVersion(e.target.value)}
         />
         {adding ? (
           <Watch type="Puff" color="#333" height={50} width={50} />
@@ -327,7 +332,7 @@ function App() {
                 type="text"
                 value={appToEdit ? appToEdit.appName : ""}
                 onChange={(e) =>
-                  setAppToEdit({ ...appToEdit, appName: e.target.value.trim() })
+                  setAppToEdit({ ...appToEdit, appName: e.target.value })
                 }
               />
             </InputContainer>
@@ -340,7 +345,7 @@ function App() {
                 onChange={(e) =>
                   setAppToEdit({
                     ...appToEdit,
-                    appVersion: e.target.value.trim(),
+                    appVersion: e.target.value,
                   })
                 }
               />
