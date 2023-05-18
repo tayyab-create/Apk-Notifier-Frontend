@@ -14,6 +14,12 @@ const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-top: 2rem;
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+  @media (max-width: 768px) {
+    font-size: 0.8rem; // decrease font size on mobile
+  }
 `;
 
 const TableHeader = styled.th`
@@ -25,6 +31,9 @@ const TableHeader = styled.th`
   color: white; // updated
   position: sticky; // added
   top: 0; // added
+  @media (max-width: 768px) {
+    font-size: 0.8rem; // decrease font size on mobile
+  }
 `;
 
 const TableRow = styled.tr`
@@ -39,6 +48,9 @@ const TableCell = styled.td`
   white-space: pre-wrap;
   word-wrap: break-word;
   max-width: 200px; // Adjust the value as needed
+  @media (max-width: 768px) {
+    max-width: 70px; // adjust as per your need
+  }
 `;
 
 const Button = styled.button`
@@ -55,11 +67,22 @@ const Button = styled.button`
   }
 `;
 
+const LinkButton = styled(Button)`
+  /* you can add specific styles for this button here if needed */
+  background-color: navy;
+`;
+
+
 const ControlsContainer = styled.div`
   display: flex;
+  flex-wrap: wrap; // Allow the items to wrap onto multiple lines
   justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
+  @media (max-width: 600px) {
+    // Adjust the breakpoint as needed
+    flex-direction: column;
+  }
 `;
 
 const Input = styled.input`
@@ -293,7 +316,11 @@ function App() {
               return (
                 <TableRowComponent key={data._id}>
                   <TableCell>{data.appName}</TableCell>
-                  <TableCell>{data.appURL}</TableCell>
+                  <TableCell>
+                    <LinkButton onClick={() => window.open(data.appURL, "_blank")}>
+                      Link
+                    </LinkButton>
+                  </TableCell>
                   <TableCell>{data.appVersion}</TableCell>
                   <TableCell>{data.googlePlayVersion || "NULL"}</TableCell>
                   <TableCell>{data.versionUpdateStatus || "NULL"}</TableCell>
