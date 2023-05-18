@@ -72,7 +72,6 @@ const LinkButton = styled(Button)`
   background-color: navy;
 `;
 
-
 const ControlsContainer = styled.div`
   display: flex;
   flex-wrap: wrap; // Allow the items to wrap onto multiple lines
@@ -181,7 +180,11 @@ function App() {
   const [appToEdit, setAppToEdit] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [cronJobRuns, setCronJobRuns] = useState(0);
+  const [showNeedUpdate, setShowNeedUpdate] = useState(false);
+  const [showNoUpdate, setShowNoUpdate] = useState(false);
 
   useEffect(() => {
     fetchAppData();
@@ -216,6 +219,10 @@ function App() {
       setAppData([...appData, res.data]);
       setAppName("");
       setAppVersion("");
+
+      // Fetch the updated app data from the backend
+      const updatedAppDataRes = await axios.get("https://notifier-backend.onrender.com/apps");
+      setAppData(updatedAppDataRes.data);
     }
     setAdding(false);
   };
@@ -262,6 +269,41 @@ function App() {
     setUpdating(false); // Finish the update process
   };
 
+  const fetchApps = async () => {
+    try {
+      setFetching(true);
+      await axios.get("https://notifier-backend.onrender.com/fetch-apps");
+  
+      fetchAppData(); // Fetch the updated app data after the fetch-apps request
+      console.log("Apps fetched successfully.");
+      setFetching(false);
+    } catch (error) {
+      console.error("An error occurred while fetching apps:", error);
+    }
+  };
+    
+
+
+
+  const deleteAllApps = async () => {
+    try {
+      setDeleting(true);
+      await axios.delete("https://notifier-backend.onrender.com/apps");
+  
+      //fetchApps(); // Fetch the updated app data after deleting all apps
+      console.log("All apps deleted successfully.");
+      // Fetch the updated app data from the backend
+      const updatedAppDataRes = await axios.get("https://notifier-backend.onrender.com/apps");
+      setAppData(updatedAppDataRes.data);
+      setDeleting(false);
+    } catch (error) {
+      console.error("An error occurred while deleting all apps:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+  
+
   return (
     <Container>
       <Heading>App Version Update Checker</Heading>
@@ -285,13 +327,46 @@ function App() {
         ) : (
           <Button onClick={addAppData}>Add</Button>
         )}
-
+      </ControlsContainer>
+      <ControlsContainer>
         {updating ? (
           <Watch type="Puff" color="#333" height={50} width={50} />
         ) : (
-          <Button onClick={checkUpdates}>Check Update</Button>
+          <Button onClick={checkUpdates}>Check All Update</Button>
+        )}
+
+        {fetching ? (
+          <Watch type="Puff" color="#333" height={50} width={50} />
+        ) : (
+          <Button onClick={() => fetchApps()}>Fetch Apps from Apk Zalmi</Button>
+        )}
+
+        {deleting ? (
+          <Watch type="Puff" color="#333" height={50} width={50} />
+        ) : (
+          <Button onClick={() => deleteAllApps()}>Delete All Apps</Button>
+
         )}
       </ControlsContainer>
+      <ControlsContainer>
+        <Button
+          onClick={() => {
+            setShowNeedUpdate(!showNeedUpdate);
+            setShowNoUpdate(false);
+          }}
+        >
+          {showNeedUpdate ? "Show All Apps" : "Show Only Need Update"}
+        </Button>
+        <Button
+          onClick={() => {
+            setShowNoUpdate(!showNoUpdate);
+            setShowNeedUpdate(false);
+          }}
+        >
+          {showNoUpdate ? "Show All Apps" : "Show Only No Update Needed"}
+        </Button>
+      </ControlsContainer>
+
       <TableContainer>
         <Table>
           <thead>
@@ -306,42 +381,59 @@ function App() {
             </TableRow>
           </thead>
           <tbody>
-            {console.log(appData)}
-            {appData.map((data) => {
-              const TableRowComponent =
-                data.versionUpdateStatus === "Need Update"
-                  ? TableRowUpdateNeeded
-                  : TableRow;
+            {appData
+              .filter((data) => {
+                if (
+                  showNeedUpdate &&
+                  data.versionUpdateStatus !== "Need Update"
+                ) {
+                  return false; // Skip if Need Update filter is enabled but data is not Need Update
+                }
+                if (
+                  showNoUpdate &&
+                  data.versionUpdateStatus === "Need Update"
+                ) {
+                  return false; // Skip if No Update Needed filter is enabled but data is Need Update
+                }
+                return true; // Include the data if it passes the filters
+              })
+              .map((data) => {
+                const TableRowComponent =
+                  data.versionUpdateStatus === "Need Update"
+                    ? TableRowUpdateNeeded
+                    : TableRow;
 
-              return (
-                <TableRowComponent key={data._id}>
-                  <TableCell>{data.appName}</TableCell>
-                  <TableCell>
-                    <LinkButton onClick={() => window.open(data.appURL, "_blank")}>
-                      Link
-                    </LinkButton>
-                  </TableCell>
-                  <TableCell>{data.appVersion}</TableCell>
-                  <TableCell>{data.googlePlayVersion || "NULL"}</TableCell>
-                  <TableCell>{data.versionUpdateStatus || "NULL"}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => deleteAppData(data._id)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() => {
-                        setAppToEdit(data);
-                        setModalIsOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRowComponent>
-              );
-            })}
+                return (
+                  <TableRowComponent key={data._id}>
+                    <TableCell>{data.appName}</TableCell>
+                    <TableCell>
+                      <LinkButton
+                        onClick={() => window.open(data.appURL, "_blank")}
+                      >
+                        Link
+                      </LinkButton>
+                    </TableCell>
+                    <TableCell>{data.appVersion}</TableCell>
+                    <TableCell>{data.googlePlayVersion || "NULL"}</TableCell>
+                    <TableCell>{data.versionUpdateStatus || "NULL"}</TableCell>
+                    <TableCell>
+                      <Button onClick={() => deleteAppData(data._id)}>
+                        Delete
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => {
+                          setAppToEdit(data);
+                          setModalIsOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRowComponent>
+                );
+              })}
           </tbody>
         </Table>
       </TableContainer>
