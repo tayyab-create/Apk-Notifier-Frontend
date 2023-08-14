@@ -185,14 +185,34 @@ function App() {
   const [cronJobRuns, setCronJobRuns] = useState(0);
   const [showNeedUpdate, setShowNeedUpdate] = useState(false);
   const [showNoUpdate, setShowNoUpdate] = useState(false);
+  const [sortLatest, setSortLatest] = useState(false);
 
   useEffect(() => {
     fetchAppData();
   }, []);
 
+  //Sort Data by Date
+  const sortAppData = () => {
+    setSortLatest(!sortLatest); // Toggle the sorting order
+
+    let sortedAppData = [...appData]; // Create a copy of app data
+    if (sortLatest) {
+      sortedAppData.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    } else {
+      sortedAppData.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+    }
+    setAppData(sortedAppData); // Set the sorted app data
+  };
+
   // Add a new function to fetch the counter
   const fetchCronJobRuns = async () => {
-    const res = await axios.get("https://notifier-backend.onrender.com/cron-job-counter");
+    const res = await axios.get(
+      "https://notifier-backend.onrender.com/cron-job-counter"
+    );
     setCronJobRuns(res.data.counter);
   };
 
@@ -215,13 +235,18 @@ function App() {
         appName: appName.trim(),
         appVersion: appVersion.trim(),
       };
-      const res = await axios.post("https://notifier-backend.onrender.com/apps", newAppData);
+      const res = await axios.post(
+        "https://notifier-backend.onrender.com/apps",
+        newAppData
+      );
       setAppData([...appData, res.data]);
       setAppName("");
       setAppVersion("");
 
       // Fetch the updated app data from the backend
-      const updatedAppDataRes = await axios.get("https://notifier-backend.onrender.com/apps");
+      const updatedAppDataRes = await axios.get(
+        "https://notifier-backend.onrender.com/apps"
+      );
       setAppData(updatedAppDataRes.data);
     }
     setAdding(false);
@@ -273,7 +298,7 @@ function App() {
     try {
       setFetching(true);
       await axios.get("https://notifier-backend.onrender.com/fetch-apps");
-  
+
       fetchAppData(); // Fetch the updated app data after the fetch-apps request
       console.log("Apps fetched successfully.");
       setFetching(false);
@@ -281,19 +306,18 @@ function App() {
       console.error("An error occurred while fetching apps:", error);
     }
   };
-    
-
-
 
   const deleteAllApps = async () => {
     try {
       setDeleting(true);
       await axios.delete("https://notifier-backend.onrender.com/apps");
-  
+
       //fetchApps(); // Fetch the updated app data after deleting all apps
       console.log("All apps deleted successfully.");
       // Fetch the updated app data from the backend
-      const updatedAppDataRes = await axios.get("https://notifier-backend.onrender.com/apps");
+      const updatedAppDataRes = await axios.get(
+        "https://notifier-backend.onrender.com/apps"
+      );
       setAppData(updatedAppDataRes.data);
       setDeleting(false);
     } catch (error) {
@@ -302,7 +326,6 @@ function App() {
       setDeleting(false);
     }
   };
-  
 
   return (
     <Container>
@@ -345,8 +368,10 @@ function App() {
           <Watch type="Puff" color="#333" height={50} width={50} />
         ) : (
           <Button onClick={() => deleteAllApps()}>Delete All Apps</Button>
-
         )}
+        <Button onClick={sortAppData}>
+          {sortLatest ? "Sort Oldest First" : "Sort Latest First"}
+        </Button>
       </ControlsContainer>
       <ControlsContainer>
         <Button
@@ -371,11 +396,13 @@ function App() {
         <Table>
           <thead>
             <TableRow>
+              <TableHeader>No</TableHeader> {/* Added */}
               <TableHeader>App Name</TableHeader>
               <TableHeader>App URL</TableHeader>
               <TableHeader>App Version</TableHeader>
               <TableHeader>Google Play Version</TableHeader>
               <TableHeader>Status</TableHeader>
+              <TableHeader>Update Date</TableHeader> {/* Added */}
               <TableHeader>Action</TableHeader>
               <TableHeader>Edit</TableHeader>
             </TableRow>
@@ -397,7 +424,7 @@ function App() {
                 }
                 return true; // Include the data if it passes the filters
               })
-              .map((data) => {
+              .map((data, index) => {
                 const TableRowComponent =
                   data.versionUpdateStatus === "Need Update"
                     ? TableRowUpdateNeeded
@@ -405,6 +432,7 @@ function App() {
 
                 return (
                   <TableRowComponent key={data._id}>
+                    <TableCell>{index + 1}</TableCell> {/* Added */}
                     <TableCell>{data.appName}</TableCell>
                     <TableCell>
                       <LinkButton
@@ -416,6 +444,14 @@ function App() {
                     <TableCell>{data.appVersion}</TableCell>
                     <TableCell>{data.googlePlayVersion || "NULL"}</TableCell>
                     <TableCell>{data.versionUpdateStatus || "NULL"}</TableCell>
+                    <TableCell>
+                      {new Date(data.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }) || "NULL"}
+                    </TableCell>{" "}
+                    {/* Added */}
                     <TableCell>
                       <Button onClick={() => deleteAppData(data._id)}>
                         Delete
